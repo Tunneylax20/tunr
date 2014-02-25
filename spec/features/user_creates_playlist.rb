@@ -1,40 +1,10 @@
 require 'spec_helper'
 
 describe "a user can create a playlist" do
-  let(:user) do 
-    User.create!({
-      email: "j@k.co",
-      password: "jeff",
-      password_confirmation: "jeff",
-      first_name: "Jeff",
-      last_name: "K",
-      dob: Date.today,
-      balance: 100.00
-    }) 
-  end
 
-  let(:kesha) do
-    Artist.create!({
-      name: "Ke$ha",
-      photo_url: "http://placekitten.com/g/200/200"
-    })
-  end
-
-  let(:tick_tock) do
-    Song.create!({
-      title: "Tick Tock",
-      price: 1.99,
-      artist: kesha
-    })
-  end
-
-  let(:love_is_my_drug) do
-    Song.create!({
-      title: "Love is My Drug",
-      price: 0.99,
-      artist: kesha
-    })
-  end
+  let(:user) { FactoryGirl.create(:user)}
+  let(:tick_tock) { FactoryGirl.create(:song}
+  let(:love_is_my_drug) { FactoryGirl.create(:song)}
 
   before do
     user.purchase(tick_tock)

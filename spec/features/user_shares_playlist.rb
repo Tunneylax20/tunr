@@ -1,107 +1,42 @@
 require 'spec_helper'
 
-describe "a user can share a playlist with a friend" do
-  let(:creator) do 
-    User.create!({
-      email: "j@k.co",
-      password: "jeff",
-      password_confirmation: "jeff",
-      first_name: "Jeff",
-      last_name: "K",
-      dob: Date.today,
-      balance: 100.00
-    }) 
-  end
+describe "a user can share a playlist" do
+  let(:creator) { FactoryGirl.create(:user) }
+  let(:shared) { FactoryGirl.create(:user) }
+  let(:some_other_user) { FactoryGirl.create(:user) }
 
-  let(:viewer) do 
-    User.create!({
-      email: "d@t.co",
-      password: "drew",
-      password_confirmation: "drew",
-      first_name: "Drew",
-      last_name: "T",
-      dob: Date.today,
-      balance: 100.00
-    }) 
-  end
+  let(:playlist) { FactoryGirl.create(:playlist, user: creator) }
 
-  let(:user_three) do 
-    User.create!({
-      email: "bryan@t.co",
-      password: "bryan",
-      password_confirmation: "bryan",
-      first_name: "bryan",
-      last_name: "T",
-      dob: Date.today,
-      balance: 100.00
-    }) 
-  end
-
-
-  let(:kesha) do
-    Artist.create!({
-      name: "Ke$ha",
-      photo_url: "http://placekitten.com/g/200/200"
-    })
-  end
-
-  let(:tick_tock) do
-    Song.create!({
-      title: "Tick Tock",
-      price: 1.99,
-      artist: kesha
-    })
-  end
-
-  let(:love_is_my_drug) do
-    Song.create!({
-      title: "Love is My Drug",
-      price: 0.99,
-      artist: kesha
-    })
-  end
-
-  before do
-    creator.purchase(tick_tock)
-    creator.purchase(love_is_my_drug)
-  end
-
-  it "shares the playlist with only one friend" do
-    # Setup
+  it "can only be seen by people who it is shared with" do
     login(creator)
 
-    # Workflow for feature
     visit user_path(creator)
-    click_link "Create Playlist"
-    fill_in "Title", with: "Sweet Beats"
-    select tick_tock.title, from: "playlist_songs"
-    click_button "Create"
-
-    # Expectations
-    within ".playlist" do
-      expect(page).to have_content "Sweet Beats"
-      expect(page).to have_content "bryan"
-    end
+    click_link playlist.title
+    click_link "Edit"
+    select shared.email, from: "Shared"
+    click_button "Save"
 
     logout(creator)
+    login(shared)
 
-    login(viewer)
-    visit user_path(viewer)
-    clink_link "View Playlists"
-
+    visit user_path(shared)
+    within ".playlists" do
+      expect(page).to have_content playlist.title
+    end
+    click_link playlist.title
     within ".playlist" do
-      expect(page).to have_content "Sweet Beats"
+      expect(page).to have_content playlist.title
     end
 
-    logout(viewer)
+    logout(shared)
+    login(some_other_user)
 
-    login(user_three)
-    visit user_path(user_three)
-    clink_link "View Playlists"
-
-    within ".playlist" do
-      expect(page).to_not have_content "Sweet Beats"
+    visit user_path(some_other_user)
+    within ".playlists" do
+      expect(page).to_not have_content playlist.title
     end
+    visit playlist_path(playlist)
+    expect(page).to_not have_content playlist.title
   end
 
   def login(user)
@@ -109,5 +44,9 @@ describe "a user can share a playlist with a friend" do
     fill_in :email, with: user.email
     fill_in :password, with: user.password
     click_button "Log in!"
+  end
+
+  def logout(user)
+    click_link "Log Out #{user.first_name}!"
   end
 end
